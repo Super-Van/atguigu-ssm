@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd"
+>
+	<!-- 扫描除Controller以外的注解 -->
+	<context:component-scan base-package="com.van">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+	</context:component-scan>
+	<!-- 数据源 -->
+	<!-- 引入数据源配置文件 -->
+	<context:property-placeholder location="classpath:dbConfig.properties"/>
+	<bean id="pooledDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="jdbcUrl" value="${jdbc.jdbcUrl}"></property>
+		<property name="driverClass" value="${jdbc.driverClass}"></property>
+		<property name="user" value="${jdbc.user}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+	</bean>
+	<!-- 整合mybatis -->
+	<!-- 配置sqlSessionFactory，包括全局配置文件地址、SQL映射文件地址、数据源 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+		<property name="dataSource" ref="pooledDataSource"></property>
+		<property name="mapperLocations" value="classpath:mapper/*.xml"></property>
+	</bean>
+	<!-- 将dao层接口的实现类即mybatis的mapper代理对象添加到IOC容器中 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 接口所在的包 -->
+		<property name="basePackage" value="com.van.dao"></property>
+	</bean>
+	<!-- 事务控制 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<!-- 控制数据源 -->
+		<property name="dataSource" ref="pooledDataSource"></property>
+	</bean>
+	<!-- 将事务切到service层的每一个方法上-->
+	<aop:config>
+		<!-- 切入点表达式：第一个*指返回值类型任意；第一个..指service包及其子包里的所有类；下一个*指任意方法；下一个..指参数任意 -->
+		<aop:pointcut expression="execution(* com.van.service..*(..))" id="txPoint"/>
+		<!-- 切面和切点的连接，advice-ref是切面，pointcut-ref是切入点 -->
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPoint"/>
+	</aop:config>
+	<!-- 要切入的事务增强 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<!-- *意即所有方法都是事务型方法，要么一路成功，要么回到原点 -->
+			<tx:method name="*"/>
+			<!-- 以get开始的所有方法是只读的 -->
+			<tx:method name="get*" read-only="true"/>
+		</tx:attributes>
+	</tx:advice>
+	<!-- 可以执行批量SQL语句的sqlSession -->
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"></constructor-arg>
+		<constructor-arg name="executorType" value="BATCH"></constructor-arg>
+	</bean>
+</beans>

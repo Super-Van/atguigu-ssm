@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!-- 遵循驼峰命名规则生成实例域 -->
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+	</settings>
+	<!-- 为bean包里的实体类指定别名 -->
+	<typeAliases>
+		<package name="com.van.bean" />
+	</typeAliases>
+	<plugins>
+		<!-- com.github.pagehelper为PageHelper类所在包名 -->
+		<plugin interceptor="com.github.pagehelper.PageInterceptor">
+		</plugin>
+	</plugins>
+</configuration>

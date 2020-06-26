@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.van.dao.IEmployeeDao">
+	<resultMap type="employee" id="employeeMap">
+		<id column="emp_id" property="empId"/>
+		<result column="emp_name" property="empName"/>
+		<result column="emp_gender" property="empGender"/>
+		<result column="emp_email" property="empEmail"/>
+		<result column="emp_dept_id" property="department.deptId"/>
+		<result column="dept_name" property="department.deptName"/>
+	</resultMap>
+	<select id="queryEmployeeByEmpId" parameterType="int" resultMap="employeeMap">
+		select
+			emp_id,
+			emp_name,
+			emp_gender,
+			emp_email,
+			emp_dept_id,
+			dept_name	
+		from
+			tb_employee,
+			tb_department
+		where emp_id = #{empId} and emp_dept_id = dept_id
+	</select>
+	<select id="queryAllEmployees" resultMap="employeeMap">
+		select
+			emp_id,
+			emp_name,
+			emp_gender,
+			emp_email,
+			emp_dept_id,
+			dept_name	
+		from
+			tb_employee,
+			tb_department
+		where emp_dept_id = dept_id
+		order by emp_id asc
+	</select>
+	<insert id="addEmployee" parameterType="employee">
+		insert into tb_employee(
+			emp_name,
+			emp_gender,
+			emp_email,
+			emp_dept_id
+		)
+		values(
+			#{empName},
+			#{empGender},
+			#{empEmail},
+			#{department.deptId}
+		)
+	</insert>
+	<select id="queryEmployeeByEmpName" parameterType="string" resultMap="employeeMap">
+		select
+			emp_id,
+			emp_name,
+			emp_gender,
+			emp_email,
+			emp_dept_id,
+			dept_name	
+		from
+			tb_employee,
+			tb_department
+		where emp_name = #{empName} and emp_dept_id = dept_id
+	</select>
+	<update id="updateEmployeeByEmpName" parameterType="employee">
+		update tb_employee set
+			emp_gender = #{empGender},
+			emp_email = #{empEmail},
+			emp_dept_id = #{department.deptId}
+		where emp_name = #{empName}
+	</update>
+	<delete id="deleteEmployee" parameterType="integer">
+		delete from tb_employee
+		where emp_id = #{empId}
+	</delete>
+	<delete id="deleteSelectedEmployees" parameterType="list">
+		delete from tb_employee
+		where emp_id in
+		<foreach collection="empIdList" item="empIdItem" open="(" separator="," close=")">
+			#{empIdItem}
+		</foreach>
+	</delete>
+</mapper>
